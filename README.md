@@ -141,7 +141,7 @@ flutter build apk --release --split-per-abi
 
 ## 👤 Tác giả
 
-**Phạm Tấn** — Sinh viên Hệ thống nhúng & IoT, Đại học Sư phạm Kỹ thuật (SPKT)  
+**Phạm Tân**
 GitHub: [@phamtanccc-ai](https://github.com/phamtanccc-ai)
 
 ---
