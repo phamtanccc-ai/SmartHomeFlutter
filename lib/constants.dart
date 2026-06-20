@@ -1,6 +1,6 @@
 // Tương đương DataStructures.h trong C++ — hằng số hệ thống và các kiểu dữ liệu dùng chung
 
-const double kMaxHousePower      = 5000.0;   // W
+const double kMaxHousePower      = 100000.0; // W
 const double kForgottenTimeLimit = 4.0;       // giờ mô phỏng
 const double kElectricityPrice   = 3000.0;   // VND/kWh
 

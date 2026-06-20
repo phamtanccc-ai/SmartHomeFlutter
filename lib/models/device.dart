@@ -21,6 +21,8 @@ abstract class Device {
   double _runningHours = 0;
   double _currentSessionHours = 0;
   int _extraParam;
+  final List<String> _notes = [];
+  DateTime? _sessionStartTime;
 
   Device({
     required this.id,
@@ -43,12 +45,14 @@ abstract class Device {
   void turnOn() {
     _isOn = true;
     _currentPower = ratedPower;
+    _sessionStartTime = DateTime.now();
   }
 
   void turnOff() {
     _isOn = false;
     _currentPower = 0;
     _currentSessionHours = 0;
+    _sessionStartTime = null;
   }
 
   /// Tính và cộng dồn điện năng tiêu thụ trong deltaHours giờ mô phỏng
@@ -63,15 +67,29 @@ abstract class Device {
 
   // ── Getters (Encapsulation) ─────────────────────────────────────────────────
 
-  bool   get isOn                 => _isOn;
-  double get currentPower         => _currentPower;
-  double get totalConsumption     => _totalConsumption;
-  double get runningHours         => _runningHours;
-  double get currentSessionHours  => _currentSessionHours;
-  int    get extraParam           => _extraParam;
+  bool         get isOn                 => _isOn;
+  double       get currentPower         => _currentPower;
+  double       get totalConsumption     => _totalConsumption;
+  double       get runningHours         => _runningHours;
+  double       get currentSessionHours  => _currentSessionHours;
+  int          get extraParam           => _extraParam;
+  List<String> get notes                => List.unmodifiable(_notes);
+  Duration     get realSessionDuration  =>
+      _sessionStartTime != null
+          ? DateTime.now().difference(_sessionStartTime!)
+          : Duration.zero;
 
   // Helper cho subclass cập nhật extraParam
   void setExtraParam(int value) => _extraParam = value;
+
+  void addNote(String note) {
+    final trimmed = note.trim();
+    if (trimmed.isNotEmpty) _notes.add(trimmed);
+  }
+
+  void removeNote(int index) {
+    if (index >= 0 && index < _notes.length) _notes.removeAt(index);
+  }
 
   // ── UI helper methods ──────────────────────────────────────────────────────
 

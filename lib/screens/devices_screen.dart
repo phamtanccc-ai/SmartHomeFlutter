@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../constants.dart';
 import '../models/smart_home_manager.dart';
 import '../services/simulation_engine.dart';
 import '../widgets/dashboard_card.dart';
 import '../widgets/device_tile.dart';
+import '../widgets/add_device_sheet.dart';
 import 'device_detail_screen.dart';
 
 class DevicesScreen extends StatelessWidget {
@@ -56,7 +58,7 @@ class DevicesScreen extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
                   child: Column(children: [
                     // Overload banner
-                    if (summary.totalCurrentPower > 5000)
+                    if (summary.totalCurrentPower > kMaxHousePower)
                       Container(
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -69,7 +71,7 @@ class DevicesScreen extends StatelessWidget {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'QUÁ TẢI! ${summary.totalCurrentPower.toStringAsFixed(0)} W > 5000 W',
+                              'QUÁ TẢI! ${summary.totalCurrentPower.toStringAsFixed(0)} W > ${kMaxHousePower.toStringAsFixed(0)} W',
                               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                             ),
                           ),
@@ -156,6 +158,7 @@ class DevicesScreen extends StatelessWidget {
                         onToggle: () => device.isOn
                             ? manager.turnOff(device.id)
                             : manager.turnOn(device.id),
+                        onLongPress: () => _confirmDelete(ctx, manager, device.id, device.name),
                       );
                     },
                     childCount: entry.value.length,
@@ -166,8 +169,52 @@ class DevicesScreen extends StatelessWidget {
               const SliverToBoxAdapter(child: SizedBox(height: 80)),
             ],
           ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => _openAddSheet(context, manager),
+            icon: const Icon(Icons.add),
+            label: const Text('Thêm thiết bị'),
+            backgroundColor: const Color(0xFF1565C0),
+            foregroundColor: Colors.white,
+          ),
         );
       },
+    );
+  }
+
+  void _openAddSheet(BuildContext context, SmartHomeManager manager) async {
+    final rooms = manager.devicesByRoom.keys.toList();
+    final device = await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => AddDeviceSheet(existingRooms: rooms),
+    );
+    if (device != null) manager.addDevice(device);
+  }
+
+  void _confirmDelete(BuildContext context, SmartHomeManager manager, String id, String name) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xóa thiết bị'),
+        content: Text('Bạn có chắc muốn xóa "$name" không?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(ctx);
+              manager.removeDevice(id);
+            },
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
     );
   }
 

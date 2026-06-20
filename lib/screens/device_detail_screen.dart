@@ -3,16 +3,29 @@ import 'package:provider/provider.dart';
 import '../models/device.dart';
 import '../models/smart_home_manager.dart';
 
-class DeviceDetailScreen extends StatelessWidget {
+class DeviceDetailScreen extends StatefulWidget {
   final String deviceId;
   const DeviceDetailScreen({super.key, required this.deviceId});
+
+  @override
+  State<DeviceDetailScreen> createState() => _DeviceDetailScreenState();
+}
+
+class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
+  final TextEditingController _noteController = TextEditingController();
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<SmartHomeManager>(
       builder: (context, manager, _) {
         final device = manager.devices.firstWhere(
-          (d) => d.id == deviceId,
+          (d) => d.id == widget.deviceId,
           orElse: () => manager.devices.first,
         );
 
@@ -25,16 +38,16 @@ class DeviceDetailScreen extends StatelessWidget {
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // ─ Status card ────────────────────────────────────────────
               _buildStatusCard(context, device, manager),
               const SizedBox(height: 16),
-
-              // ─ Info card ──────────────────────────────────────────────
               _buildInfoCard(device),
               const SizedBox(height: 16),
-
-              // ─ Parameter slider ───────────────────────────────────────
-              if (device.hasParam) _buildParamCard(context, device, manager),
+              if (device.hasParam) ...[
+                _buildParamCard(context, device, manager),
+                const SizedBox(height: 16),
+              ],
+              _buildNotesCard(context, device, manager),
+              const SizedBox(height: 24),
             ],
           ),
         );
@@ -182,6 +195,109 @@ class DeviceDetailScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildNotesCard(BuildContext context, Device device, SmartHomeManager manager) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _sectionTitle('Ghi Chú'),
+            const Divider(),
+
+            // Input row
+            Row(children: [
+              Expanded(
+                child: TextField(
+                  controller: _noteController,
+                  decoration: InputDecoration(
+                    hintText: 'Thêm ghi chú mới...',
+                    hintStyle: const TextStyle(fontSize: 13),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    isDense: true,
+                  ),
+                  maxLines: 1,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (text) => _submitNote(manager, device.id),
+                ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: () => _submitNote(manager, device.id),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Icon(Icons.add, size: 20),
+              ),
+            ]),
+
+            // Notes list
+            if (device.notes.isEmpty) ...[
+              const SizedBox(height: 16),
+              Center(
+                child: Text(
+                  'Chưa có ghi chú nào',
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 8),
+              ...device.notes.asMap().entries.map((entry) {
+                final index = entry.key;
+                final note = entry.value;
+                return Dismissible(
+                  key: ValueKey('${device.id}_note_$index'),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.delete_outline, color: Colors.red.shade700),
+                  ),
+                  onDismissed: (_) => manager.removeNote(device.id, index),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.amber.shade200),
+                    ),
+                    child: Row(children: [
+                      const Icon(Icons.sticky_note_2_outlined, size: 16, color: Colors.amber),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(note, style: const TextStyle(fontSize: 13)),
+                      ),
+                      GestureDetector(
+                        onTap: () => manager.removeNote(device.id, index),
+                        child: Icon(Icons.close, size: 16, color: Colors.grey.shade400),
+                      ),
+                    ]),
+                  ),
+                );
+              }),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _submitNote(SmartHomeManager manager, String deviceId) {
+    final text = _noteController.text.trim();
+    if (text.isEmpty) return;
+    manager.addNote(deviceId, text);
+    _noteController.clear();
   }
 
   Widget _sectionTitle(String text) => Text(

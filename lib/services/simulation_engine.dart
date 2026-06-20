@@ -8,7 +8,7 @@ import '../models/smart_home_manager.dart';
 // Mỗi giây: gọi manager.updateSimulation(0.5)
 // =============================================================================
 class SimulationEngine {
-  static const double _tickStep = 0.5; // giờ/tick
+  static const double _tickStep = 5.0 / 60.0; // giờ/tick (~5 phút mô phỏng/giây)
   static const Duration _interval = Duration(seconds: 1);
 
   Timer? _timer;

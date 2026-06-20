@@ -26,9 +26,10 @@ class SmartHomeManager extends ChangeNotifier {
 
   // ── Getters ─────────────────────────────────────────────────────────────────
 
-  List<Device>    get devices       => List.unmodifiable(_devices);
-  List<AlertInfo> get alerts        => List.unmodifiable(_alerts);
-  List<double>    get energyHistory => List.unmodifiable(_energyHistory);
+  List<Device>    get devices                => List.unmodifiable(_devices);
+  List<AlertInfo> get alerts                 => List.unmodifiable(_alerts);
+  List<double>    get energyHistory          => List.unmodifiable(_energyHistory);
+  double          get currentHourConsumption => _currentHourConsumption;
 
   HomeSummary get summary {
     double totalPower = 0;
@@ -61,6 +62,12 @@ class SmartHomeManager extends ChangeNotifier {
 
   void addDevice(Device device) {
     _devices.add(device);
+    notifyListeners();
+  }
+
+  void removeDevice(String id) {
+    _devices.removeWhere((d) => d.id == id);
+    _warnedDevices.remove(id);
     notifyListeners();
   }
 
@@ -112,6 +119,16 @@ class SmartHomeManager extends ChangeNotifier {
 
   void clearAlerts() {
     _alerts.clear();
+    notifyListeners();
+  }
+
+  void addNote(String deviceId, String note) {
+    _findById(deviceId)?.addNote(note);
+    notifyListeners();
+  }
+
+  void removeNote(String deviceId, int index) {
+    _findById(deviceId)?.removeNote(index);
     notifyListeners();
   }
 
